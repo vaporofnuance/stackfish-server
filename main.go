@@ -45,7 +45,6 @@ func ChessServer(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				responseObj = result
 			} else {
-				globalEngine = nil
 				// Try to kill the engine and restart
 				result, err = GetStockfishResults(strings.Join(game, " "), fenString[0], elo)
 
@@ -72,8 +71,6 @@ func ChessServer(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Fatal(err)
-
-		w.WriteHeader(500)
 	} else {
 		w.WriteHeader(200)
 		w.Write(bytes)
