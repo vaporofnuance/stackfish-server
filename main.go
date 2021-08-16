@@ -45,7 +45,15 @@ func ChessServer(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				responseObj = result
 			} else {
-				responseObj = err
+				globalEngine = nil
+				// Try to kill the engine and restart
+				result, err = GetStockfishResults(strings.Join(game, " "), fenString[0], elo)
+
+				if err == nil {
+					responseObj = result
+				} else {
+					responseObj = err
+				}
 			}
 		} else {
 			responseObj = errors.New("fen parameter is missing")

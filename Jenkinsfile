@@ -14,7 +14,7 @@ pipeline {
     }
     stage('Build') {
       steps {
-        sh 'docker build --tag dreamcove/stockfish-server:latest .'
+        sh 'docker build --tag registry.dreamcove.com/dreamcove/stockfish-server:latest .'
       }
     }
     stage('Publish') {
@@ -27,7 +27,7 @@ pipeline {
         withCredentials([
           string(credentialsId: 'DOCKER_PASSWORD', variable: 'DOCKER_PASSWORD'),
         ]) {
-          sh 'docker login --username vaporofnuance --password ${DOCKER_PASSWORD} && docker push dreamcove/stockfish-server'
+          sh 'docker push registry.dreamcove.com/dreamcove/stockfish-server'
         }
       }
     }
