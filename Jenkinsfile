@@ -26,8 +26,9 @@ pipeline {
       steps {
         withCredentials([
           string(credentialsId: 'DOCKER_PASSWORD', variable: 'DOCKER_PASSWORD'),
+          string(credentialsId: 'DOCKER_USERNAME', variable: 'DOCKER_USERNAME'),
         ]) {
-          sh 'docker push registry.dreamcove.com/dreamcove/stockfish-server'
+          sh 'docker login registry.dreamcove.com -u $DOCKER_USERNAME -p $DOCKER_PASSWORD && docker push registry.dreamcove.com/dreamcove/stockfish-server'
         }
       }
     }
