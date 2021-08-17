@@ -1,2 +1,3 @@
 .idea/
-stockerfish-server
+stockfish-server
+data/**

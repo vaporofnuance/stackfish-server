@@ -18,6 +18,9 @@ type EngineWrapper struct {
 }
 
 func main() {
+	os.Mkdir("./data", 0755)
+	os.Mkdir("./data/syzygy", 0755)
+
 	http.HandleFunc("/move", ChessServer)
 	http.ListenAndServe(":8081", nil)
 }
