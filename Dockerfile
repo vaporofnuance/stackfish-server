@@ -20,7 +20,7 @@ ENV STOCKFISH_PATH=./stockfish_x64
 
 EXPOSE 8081
 
-RUN cd src && go build
+RUN cd src && go mod download github.com/freeeve/uci && go build
 RUN mv src/stockfish-server .
 RUN mkdir data
 
