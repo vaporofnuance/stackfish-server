@@ -17,6 +17,39 @@ type EngineWrapper struct {
 	LastAccessed time.Time
 }
 
+type StockfishConfig struct {
+	Hash int `json:"hash"`
+	Threads int `json:"threads"`
+	Depth int `json:"depth"`
+	MoveTime int64 `json:"moveTime"`
+	SurvivalTime int `json:"survivalTime"`
+	MaxEngines int `json:"maxEngines"`
+	Options map[string]string `json:"options"`
+}
+
+func GetConfig() (result StockfishConfig) {
+	bytes, err := os.ReadFile("data/stockfish.json")
+
+	if err == nil {
+		err = json.Unmarshal(bytes, &result)
+	}
+
+	if err != nil {
+		result.Depth = 5
+		result.MoveTime = 60000
+		result.MaxEngines = 200
+		result.SurvivalTime = 30
+
+		bytes, err = json.Marshal(result)
+
+		if err == nil {
+			os.WriteFile("data/stockfish.json", bytes, 0755)
+		}
+	}
+
+	return result
+}
+
 func main() {
 	os.Mkdir("./data", 0755)
 	os.Mkdir("./data/syzygy", 0755)
@@ -83,23 +116,11 @@ func ChessServer(w http.ResponseWriter, r *http.Request) {
 var engines map[string]EngineWrapper = map[string]EngineWrapper{}
 
 func getSurvivalTime() time.Duration {
-	survivalSeconds := os.Getenv("SURVIVAL_TIME")
-	result, err := strconv.Atoi(survivalSeconds)
-	if err != nil {
-		result = 30
-	}
-
-	return time.Duration(result) * time.Second
+	return time.Duration(GetConfig().SurvivalTime) * time.Second
 }
 
 func getMaxEngines() int {
-	maxEngines := os.Getenv("MAX_ENGINES")
-	result, err := strconv.Atoi(maxEngines)
-	if err != nil {
-		result = 200
-	}
-
-	return result
+	return GetConfig().MaxEngines
 }
 
 func pruneEngines() {
@@ -124,6 +145,7 @@ func pruneEngines() {
 }
 
 func GetEngine(gameID string) (engine *uci.Engine, err error) {
+	config := GetConfig()
 	if wrapper, ok := engines[gameID]; ok {
 		wrapper.LastAccessed = time.Now()
 		engine = wrapper.Engine
@@ -134,11 +156,11 @@ func GetEngine(gameID string) (engine *uci.Engine, err error) {
 		if err == nil {
 			// set some engine options
 			engine.SetOptions(uci.Options{
-				Hash:    1024,
+				Hash:    config.Hash,
 				Ponder:  false,
 				OwnBook: true,
 				MultiPV: 2,
-				Threads: 2,
+				Threads: config.Threads,
 			})
 
 			wrapper := EngineWrapper{
@@ -194,6 +216,9 @@ func GetStockfishResults(gameID string, fenString string, elo int) (result *uci.
 	 */
 
 	eng, err := GetEngine(gameID)
+
+	config := GetConfig()
+
 	if err == nil {
 		// set the starting position
 		eng.SetFEN(fenString)
@@ -210,11 +235,13 @@ func GetStockfishResults(gameID string, fenString string, elo int) (result *uci.
 		//eng.SendOption("Skill Level", skillLevel)
 		eng.SendOption("UCI_LimitStrength", true)
 		eng.SendOption("UCI_Elo", elo)
-		eng.SendOption("SyzygyPath", "./data/syzygy")
-		eng.SendOption("SyzygyProbeDepth", 10)
+
+		for k, v := range config.Options {
+			eng.SendOption(k, v)
+		}
 
 		// set some result filter options
-		result, err = eng.Go(5, "", 60000, uci.HighestDepthOnly, uci.IncludeUpperbounds, uci.IncludeLowerbounds)
+		result, err = eng.Go(config.Depth, "", config.MoveTime, uci.HighestDepthOnly, uci.IncludeUpperbounds, uci.IncludeLowerbounds)
 	}
 
 	return result, err
