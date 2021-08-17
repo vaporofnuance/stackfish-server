@@ -10,7 +10,7 @@ COPY main.go ./src
 RUN apt-get update
 RUN apt-get -y install unzip
 
-RUN curl https://stockfishchess.org/files/stockfish-14-linux.zip -o stockfish-14-linux.zip
+RUN curl https://stockfishchess.org/files/stockfish_14_linux_x64.zip -o stockfish-14-linux.zip
 RUN unzip stockfish-14-linux.zip stock*64
 RUN cp stockfish-14-linux/Linux/*_x64 ./stockfish_x64
 RUN rm -Rf stockfish-14-linux*
