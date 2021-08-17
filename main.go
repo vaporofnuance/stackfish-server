@@ -210,7 +210,7 @@ func GetStockfishResults(gameID string, fenString string, elo int) (result *uci.
 		//eng.SendOption("Skill Level", skillLevel)
 		eng.SendOption("UCI_LimitStrength", true)
 		eng.SendOption("UCI_Elo", elo)
-		eng.SendOption("SyzygyPath", "./syzygy/3-4-5")
+		eng.SendOption("SyzygyPath", "./data/syzygy")
 
 		// set some result filter options
 		result, err = eng.Go(5, "", 10000, uci.HighestDepthOnly, uci.IncludeUpperbounds, uci.IncludeLowerbounds)
