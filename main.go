@@ -131,11 +131,11 @@ func GetEngine(gameID string) (engine *uci.Engine, err error) {
 		if err == nil {
 			// set some engine options
 			engine.SetOptions(uci.Options{
-				Hash:    128,
+				Hash:    1024,
 				Ponder:  false,
 				OwnBook: true,
 				MultiPV: 2,
-				Threads: 4,
+				Threads: 2,
 			})
 
 			wrapper := EngineWrapper{
@@ -163,6 +163,7 @@ func GetStockfishResults(gameID string, fenString string, elo int) (result *uci.
 	// Based on this article.  Though, we could create a test with different configurations to run
 	// Stockfish against Stockfish to determine new Elos
 	// http://www.talkchess.com/forum3/viewtopic.php?t=69731
+	/*
 	skillLevelElos := []int{
 		1231,
 		1341,
@@ -187,25 +188,28 @@ func GetStockfishResults(gameID string, fenString string, elo int) (result *uci.
 		3450,
 	}
 
+	 */
+
 	eng, err := GetEngine(gameID)
 	if err == nil {
 		// set the starting position
 		eng.SetFEN(fenString)
 
+		/**
 		skillLevel := 0
 		for i, skillLevelElo := range skillLevelElos {
 			if skillLevelElo < elo {
 				skillLevel = i
 			}
 		}
+		*/
 
-		eng.SendOption("Skill Level", skillLevel)
+		//eng.SendOption("Skill Level", skillLevel)
 		eng.SendOption("UCI_LimitStrength", true)
 		eng.SendOption("UCI_Elo", elo)
 
 		// set some result filter options
-		resultOpts := uci.HighestDepthOnly | uci.IncludeUpperbounds | uci.IncludeLowerbounds
-		result, err = eng.GoDepth(16, resultOpts)
+		result, err = eng.Go(5, "", 10000, uci.HighestDepthOnly, uci.IncludeUpperbounds, uci.IncludeLowerbounds)
 	}
 
 	return result, err
