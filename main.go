@@ -25,6 +25,9 @@ type StockfishConfig struct {
 	SurvivalTime int `json:"survivalTime"`
 	MaxEngines int `json:"maxEngines"`
 	Options map[string]string `json:"options"`
+	MultiPV int `json:"multiPV"`
+	Ponder bool `json:"ponder"`
+	OwnBook bool `json:"ownBook"`
 }
 
 func GetConfig() (result StockfishConfig) {
@@ -39,6 +42,11 @@ func GetConfig() (result StockfishConfig) {
 		result.MoveTime = 60000
 		result.MaxEngines = 200
 		result.SurvivalTime = 30
+		result.MultiPV = 1
+		result.Hash = 128
+		result.Threads = 1
+		result.Ponder = false
+		result.OwnBook = true
 
 		bytes, err = json.Marshal(result)
 
@@ -52,7 +60,6 @@ func GetConfig() (result StockfishConfig) {
 
 func main() {
 	os.Mkdir("./data", 0755)
-	os.Mkdir("./data/syzygy", 0755)
 
 	http.HandleFunc("/move", ChessServer)
 	http.ListenAndServe(":8081", nil)
@@ -64,7 +71,7 @@ func ChessServer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if game, ok := r.URL.Query()["game"];ok {
-		if fenString, ok := r.URL.Query()["fen"]; ok {
+		if movesString, ok := r.URL.Query()["moves"]; ok {
 			elo := 800
 
 			var eloString []string
@@ -76,13 +83,13 @@ func ChessServer(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			result, err := GetStockfishResults(strings.Join(game, " "), fenString[0], elo)
+			result, err := GetStockfishResults(strings.Join(game, " "), movesString[0], elo)
 
 			if err == nil {
 				responseObj = result
 			} else {
 				// Try to kill the engine and restart
-				result, err = GetStockfishResults(strings.Join(game, " "), fenString[0], elo)
+				result, err = GetStockfishResults(strings.Join(game, " "), movesString[0], elo)
 
 				if err == nil {
 					responseObj = result
@@ -91,7 +98,7 @@ func ChessServer(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		} else {
-			responseObj = errors.New("fen parameter is missing")
+			responseObj = errors.New("moves parameter is missing")
 		}
 	} else {
 		responseObj = errors.New("game parameter is missing")
@@ -157,9 +164,9 @@ func GetEngine(gameID string) (engine *uci.Engine, err error) {
 			// set some engine options
 			engine.SetOptions(uci.Options{
 				Hash:    config.Hash,
-				Ponder:  false,
-				OwnBook: true,
-				MultiPV: 2,
+				Ponder:  config.Ponder,
+				OwnBook: config.OwnBook,
+				MultiPV: config.MultiPV,
 				Threads: config.Threads,
 			})
 
@@ -184,11 +191,11 @@ func GetEngine(gameID string) (engine *uci.Engine, err error) {
 	return engine, err
 }
 
-func GetStockfishResults(gameID string, fenString string, elo int) (result *uci.Results, err error) {
+func GetStockfishResults(gameID string, movesString string, elo int) (result *uci.Results, err error) {
 	// Based on this article.  Though, we could create a test with different configurations to run
 	// Stockfish against Stockfish to determine new Elos
 	// http://www.talkchess.com/forum3/viewtopic.php?t=69731
-
+/*
 	skillLevelElos := []int{
 		1231,
 		1341,
@@ -212,7 +219,7 @@ func GetStockfishResults(gameID string, fenString string, elo int) (result *uci.
 		2905,
 		3450,
 	}
-
+*/
 
 
 	eng, err := GetEngine(gameID)
@@ -221,14 +228,17 @@ func GetStockfishResults(gameID string, fenString string, elo int) (result *uci.
 
 	if err == nil {
 		// set the starting position
-		eng.SetFEN(fenString)
+		eng.SetMoves(movesString)
 
+		/*
 		skillLevel := 0
 		for i, skillLevelElo := range skillLevelElos {
 			if skillLevelElo < elo {
 				skillLevel = i
 			}
 		}
+
+		 */
 
 		//eng.SendOption("Skill Level", skillLevel)
 		eng.SendOption("UCI_LimitStrength", true)
@@ -239,7 +249,7 @@ func GetStockfishResults(gameID string, fenString string, elo int) (result *uci.
 		}
 
 		// set some result filter options
-		result, err = eng.GoDepth(skillLevel + 1)
+		result, err = eng.GoDepth(10)
 	}
 
 	return result, err
