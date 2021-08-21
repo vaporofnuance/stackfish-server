@@ -249,7 +249,7 @@ func GetStockfishResults(gameID string, movesString string, elo int) (result *uc
 		}
 
 		// set some result filter options
-		result, err = eng.Go(0, "", 0, uci.HighestDepthOnly, uci.IncludeLowerbounds, uci.IncludeUpperbounds)
+		result, err = eng.Go(0, "", 10000, uci.HighestDepthOnly, uci.IncludeLowerbounds, uci.IncludeUpperbounds)
 	}
 
 	return result, err
