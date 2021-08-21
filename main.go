@@ -195,7 +195,7 @@ func GetStockfishResults(gameID string, movesString string, elo int) (result *uc
 	// Based on this article.  Though, we could create a test with different configurations to run
 	// Stockfish against Stockfish to determine new Elos
 	// http://www.talkchess.com/forum3/viewtopic.php?t=69731
-/*
+
 	skillLevelElos := []int{
 		1231,
 		1341,
@@ -219,7 +219,7 @@ func GetStockfishResults(gameID string, movesString string, elo int) (result *uc
 		2905,
 		3450,
 	}
-*/
+
 
 
 	eng, err := GetEngine(gameID)
@@ -230,7 +230,7 @@ func GetStockfishResults(gameID string, movesString string, elo int) (result *uc
 		// set the starting position
 		eng.SetMoves(movesString)
 
-		/*
+
 		skillLevel := 0
 		for i, skillLevelElo := range skillLevelElos {
 			if skillLevelElo < elo {
@@ -238,7 +238,7 @@ func GetStockfishResults(gameID string, movesString string, elo int) (result *uc
 			}
 		}
 
-		 */
+
 
 		//eng.SendOption("Skill Level", skillLevel)
 		eng.SendOption("UCI_LimitStrength", true)
@@ -249,7 +249,7 @@ func GetStockfishResults(gameID string, movesString string, elo int) (result *uc
 		}
 
 		// set some result filter options
-		result, err = eng.Go(0, "", 10000, uci.HighestDepthOnly, uci.IncludeLowerbounds, uci.IncludeUpperbounds)
+		result, err = eng.Go(skillLevel + 1, "", 10000, uci.HighestDepthOnly, uci.IncludeLowerbounds, uci.IncludeUpperbounds)
 	}
 
 	return result, err
